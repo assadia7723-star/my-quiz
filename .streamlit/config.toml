@@ -1,0 +1,3 @@
+[server]
+encoding = "utf-8"
+headless = true
