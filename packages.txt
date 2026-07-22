@@ -1,2 +1,0 @@
-locales
-language-pack-ko
