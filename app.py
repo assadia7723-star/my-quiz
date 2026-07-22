@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
-# -*- coding: utf-8 -*-
+import sys
+import os
+
+# 파이썬 표준 입출력 인코딩을 UTF-8로 강제 고정
+sys.stdout.reconfigure(encoding='utf-8')
+sys.stderr.reconfigure(encoding='utf-8')
+os.environ['PYTHONIOENCODING'] = 'utf-8'
+
 import streamlit as st
 from google import genai
 
