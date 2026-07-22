@@ -2,7 +2,7 @@
 import sys
 import os
 
-# 파이썬 표준 입출력 인코딩을 UTF-8로 강제 고정
+# 1. 파이썬 표준 입출력 인코딩을 UTF-8로 강제 고정 (ASCII 에러 방지)
 sys.stdout.reconfigure(encoding='utf-8')
 sys.stderr.reconfigure(encoding='utf-8')
 os.environ['PYTHONIOENCODING'] = 'utf-8'
@@ -10,7 +10,7 @@ os.environ['PYTHONIOENCODING'] = 'utf-8'
 import streamlit as st
 from google import genai
 
-# 페이지 기본 설정
+# 2. 페이지 기본 설정
 st.set_page_config(
     page_title="완독 확인 독서 퀴즈 생성기 (무료)",
     page_icon="📚",
@@ -20,18 +20,21 @@ st.set_page_config(
 st.title("📚 완독 확인 독서 퀴즈 생성기")
 st.caption("Google Gemini 무료 AI를 활용하여 책 완독 확인 퀴즈를 생성합니다.")
 
-# 1. Gemini API Key 불러오기
-api_key = st.secrets.get("GEMINI_API_KEY")
+# 3. Gemini API Key 불러오기 및 문자열 정화 (공백/따옴표 제거)
+raw_key = st.secrets.get("GEMINI_API_KEY", "")
+api_key = str(raw_key).strip().strip('"').strip("'")
 
 if not api_key:
     with st.sidebar:
         st.warning("Secrets에 GEMINI_API_KEY가 설정되지 않았습니다.")
-        api_key = st.text_input("Google Gemini API Key 직접 입력", type="password")
+        user_key = st.text_input("Google Gemini API Key 직접 입력", type="password")
+        if user_key:
+            api_key = user_key.strip()
 
-# 2. 책 제목 입력
+# 4. 책 제목 입력
 book_title = st.text_input("책 제목을 입력하세요", placeholder="예: 어린 왕자")
 
-# 3. 퀴즈 생성 버튼
+# 5. 퀴즈 생성 버튼 클릭 시 작동
 if st.button("무료로 퀴즈 생성하기", type="primary", use_container_width=True):
     if not api_key:
         st.error("Google Gemini API Key가 필요합니다. Secrets 설정 또는 사이드바에 입력해 주세요.")
@@ -41,7 +44,7 @@ if st.button("무료로 퀴즈 생성하기", type="primary", use_container_widt
         with st.spinner("Gemini 무료 AI가 퀴즈를 만들고 있습니다..."):
             try:
                 # Google Gemini 클라이언트 생성
-                client = genai.Client(api_key=str(api_key).strip())
+                client = genai.Client(api_key=api_key)
                 
                 prompt = (
                     f"너는 아동 및 청소년 도서 전문 교육자야.\n"
@@ -54,6 +57,7 @@ if st.button("무료로 퀴즈 생성하기", type="primary", use_container_widt
                     f"4. 각 문제 밑에 <정답 및 완독 확인 포인트> 작성"
                 )
 
+                # 무료 티어 지원 최신 모델 호출
                 response = client.models.generate_content(
                     model='gemini-2.5-flash',
                     contents=prompt,
