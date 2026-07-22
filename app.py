@@ -1,82 +1,60 @@
 # -*- coding: utf-8 -*-
-import sys
-import os
-
-# 1. 서버 입출력 스트림 강제 UTF-8 설정
-os.environ["LC_ALL"] = "C.UTF-8"
-os.environ["LANG"] = "C.UTF-8"
-os.environ["PYTHONIOENCODING"] = "utf-8"
-
-if hasattr(sys, "stdout") and hasattr(sys.stdout, "reconfigure"):
-    try:
-        sys.stdout.reconfigure(encoding="utf-8")
-    except Exception:
-        pass
-
 import streamlit as st
-from openai import OpenAI
+from google import genai
 
-# 2. 페이지 설정
+# 페이지 기본 설정
 st.set_page_config(
-    page_title="완독 확인 독서 퀴즈 생성기",
+    page_title="완독 확인 독서 퀴즈 생성기 (무료)",
     page_icon="📚",
     layout="centered"
 )
 
-# 3. 화면 UI
 st.title("📚 완독 확인 독서 퀴즈 생성기")
-st.caption("책 제목만 입력하면 아이가 책을 읽었는지 확인하는 퀴즈를 만들어줍니다.")
+st.caption("Google Gemini 무료 AI를 활용하여 책 완독 확인 퀴즈를 생성합니다.")
 
-# 4. API Key 확인
-api_key = st.secrets.get("OPENAI_API_KEY")
+# 1. Gemini API Key 불러오기
+api_key = st.secrets.get("GEMINI_API_KEY")
 
 if not api_key:
     with st.sidebar:
-        st.warning("API Key 설정이 필요합니다.")
-        api_key = st.text_input("OpenAI API Key 직접 입력", type="password")
+        st.warning("Secrets에 GEMINI_API_KEY가 설정되지 않았습니다.")
+        api_key = st.text_input("Google Gemini API Key 직접 입력", type="password")
 
-book_title = st.text_input("책 제목을 입력하세요", placeholder="예: 호랑이를 부탁해")
+# 2. 책 제목 입력
+book_title = st.text_input("책 제목을 입력하세요", placeholder="예: 어린 왕자")
 
-# 5. 퀴즈 생성
-if st.button("퀴즈 생성하기", type="primary", use_container_width=True):
+# 3. 퀴즈 생성 버튼
+if st.button("무료로 퀴즈 생성하기", type="primary", use_container_width=True):
     if not api_key:
-        st.error("API Key가 필요합니다. Secrets 설정을 확인해 주세요.")
+        st.error("Google Gemini API Key가 필요합니다. Secrets 설정 또는 사이드바에 입력해 주세요.")
     elif not book_title.strip():
         st.warning("책 제목을 입력해 주세요.")
     else:
-        with st.spinner("책 내용을 분석하여 퀴즈를 만들고 있습니다..."):
+        with st.spinner("Gemini 무료 AI가 퀴즈를 만들고 있습니다..."):
             try:
-                # API Key 인코딩 안전화
-                clean_api_key = str(api_key).strip().encode("ascii", "ignore").decode("ascii")
-                client = OpenAI(api_key=clean_api_key)
+                # Google Gemini 클라이언트 생성
+                client = genai.Client(api_key=str(api_key).strip())
                 
-                system_prompt = (
-                    "[역할]\n"
-                    "너는 아동 및 청소년 도서 전문 교육자이자 독서 지도사야.\n"
-                    "사용자가 '책 제목'을 제공하면, 아이가 그 책을 실제 완독했는지 확인하기 위한 '맞춤형 독서 퀴즈 세트'를 생성해야 해.\n\n"
-                    "[출력 규칙]\n"
-                    "1. 입력받은 책 제목을 바탕으로 아래 3가지 영역의 퀴즈를 작성해줘.\n"
-                    "   - 1구역: [줄거리 확인] 단답형 또는 주관식 2문제\n"
-                    "   - 2구역: [디테일 확인] 3지 선다형 객관식 2문제\n"
-                    "   - 3구역: [생각해보기] 서술형 1문제\n"
-                    "2. 각 문제 아래에는 <정답 및 완독 확인 포인트>를 함께 제공해줘.\n"
-                    "3. 책 내용을 모르거나 불분명할 경우 '해당 도서의 상세 정보를 찾을 수 없습니다.'라고 답변해줘."
+                prompt = (
+                    f"너는 아동 및 청소년 도서 전문 교육자야.\n"
+                    f"책 제목: [{book_title.strip()}]\n"
+                    f"위 책을 아이가 진짜 완독했는지 검증하기 위한 독서 퀴즈 세트를 만들어줘.\n\n"
+                    f"[출력 구성]\n"
+                    f"1. 줄거리 확인 문제 2개 (주관식/단답형)\n"
+                    f"2. 디테일 확인 문제 2개 (3지 선다형 객관식)\n"
+                    f"3. 생각해보는 서술형 문제 1개\n"
+                    f"4. 각 문제 밑에 <정답 및 완독 확인 포인트> 작성"
                 )
 
-                user_input = f"책 제목: [{book_title.strip()}] 바탕으로 완독 확인 퀴즈를 만들어주세요."
-
-                response = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_input}
-                    ]
+                # 무료 티어 지원 모델 (gemini-2.5-flash 또는 gemini-2.0-flash)
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=prompt,
                 )
                 
-                result = response.choices[0].message.content
                 st.success("퀴즈 생성 완료!")
                 st.markdown("---")
-                st.markdown(result)
+                st.markdown(response.text)
                 
             except Exception as e:
                 st.error(f"오류가 발생했습니다: {str(e)}")
