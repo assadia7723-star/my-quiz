@@ -20,7 +20,7 @@ st.set_page_config(
 st.title("📚 완독 확인 독서 퀴즈 생성기")
 st.caption("Google Gemini 무료 AI를 활용하여 책 완독 확인 퀴즈를 생성합니다.")
 
-# 3. Gemini API Key 불러오기 및 문자열 정화 (공백/따옴표 제거)
+# 3. Gemini API Key 불러오기 및 정화 (공백/따옴표 제거)
 raw_key = st.secrets.get("GEMINI_API_KEY", "")
 api_key = str(raw_key).strip().strip('"').strip("'")
 
@@ -57,9 +57,9 @@ if st.button("무료로 퀴즈 생성하기", type="primary", use_container_widt
                     f"4. 각 문제 밑에 <정답 및 완독 확인 포인트> 작성"
                 )
 
-                # 무료 티어 지원 최신 모델 호출
+                # 표준 무료 모델인 gemini-1.5-flash 적용 (404 오류 방지)
                 response = client.models.generate_content(
-                    model='gemini-2.5-flash',
+                    model='gemini-1.5-flash',
                     contents=prompt,
                 )
                 
