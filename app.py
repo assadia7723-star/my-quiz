@@ -2,7 +2,7 @@
 import sys
 import os
 
-# 1. 파이썬 표준 입출력 인코딩을 UTF-8로 강제 고정 (ASCII 에러 방지)
+# 1. 파이썬 표준 입출력 인코딩을 UTF-8로 강제 고정
 sys.stdout.reconfigure(encoding='utf-8')
 sys.stderr.reconfigure(encoding='utf-8')
 os.environ['PYTHONIOENCODING'] = 'utf-8'
@@ -34,7 +34,7 @@ if not api_key:
 # 4. 책 제목 입력
 book_title = st.text_input("책 제목을 입력하세요", placeholder="예: 어린 왕자")
 
-# 5. 퀴즈 생성 버튼 클릭 시 작동
+# 5. 퀴즈 생성 버튼
 if st.button("무료로 퀴즈 생성하기", type="primary", use_container_width=True):
     if not api_key:
         st.error("Google Gemini API Key가 필요합니다. Secrets 설정 또는 사이드바에 입력해 주세요.")
@@ -43,7 +43,7 @@ if st.button("무료로 퀴즈 생성하기", type="primary", use_container_widt
     else:
         with st.spinner("Gemini 무료 AI가 퀴즈를 만들고 있습니다..."):
             try:
-                # Google Gemini 클라이언트 생성
+                # Gemini 클라이언트 생성
                 client = genai.Client(api_key=api_key)
                 
                 prompt = (
@@ -57,9 +57,9 @@ if st.button("무료로 퀴즈 생성하기", type="primary", use_container_widt
                     f"4. 각 문제 밑에 <정답 및 완독 확인 포인트> 작성"
                 )
 
-                # 표준 무료 모델인 gemini-1.5-flash 적용 (404 오류 방지)
+                # 최신 무료 지원 모델 적용 (gemini-2.0-flash)
                 response = client.models.generate_content(
-                    model='gemini-1.5-flash',
+                    model='gemini-2.0-flash',
                     contents=prompt,
                 )
                 
