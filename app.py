@@ -2,8 +2,11 @@
 import sys
 import os
 
-# 1. 시스템 입출력 표준을 UTF-8로 지정 (ASCII 충돌 방지)
+# Linux OS 환경변수를 UTF-8로 강제 지정
+os.environ["LC_ALL"] = "C.UTF-8"
+os.environ["LANG"] = "C.UTF-8"
 os.environ["PYTHONIOENCODING"] = "utf-8"
+
 if hasattr(sys, "stdout") and hasattr(sys.stdout, "reconfigure"):
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -13,7 +16,7 @@ if hasattr(sys, "stdout") and hasattr(sys.stdout, "reconfigure"):
 import streamlit as st
 from openai import OpenAI
 
-# 2. Page 설정
+# 페이지 설정
 st.set_page_config(
     page_title="완독 확인 독서 퀴즈 생성기",
     page_icon="📚",
@@ -23,7 +26,7 @@ st.set_page_config(
 st.title("📚 완독 확인 독서 퀴즈 생성기")
 st.caption("책 제목만 입력하면 아이가 책을 읽었는지 확인하는 퀴즈를 만들어줍니다.")
 
-# 3. API Key 로드
+# Secrets 키 불러오기
 api_key = st.secrets.get("OPENAI_API_KEY")
 
 if not api_key:
@@ -31,10 +34,8 @@ if not api_key:
         st.warning("API Key 설정이 필요합니다.")
         api_key = st.text_input("OpenAI API Key 직접 입력", type="password")
 
-# 4. 입력창
 book_title = st.text_input("책 제목을 입력하세요", placeholder="예: 호랑이를 부탁해")
 
-# 5. 퀴즈 생성 로직
 if st.button("퀴즈 생성하기", type="primary", use_container_width=True):
     if not api_key:
         st.error("API Key가 필요합니다. Secrets 설정을 확인해 주세요.")
@@ -43,11 +44,9 @@ if st.button("퀴즈 생성하기", type="primary", use_container_width=True):
     else:
         with st.spinner("책 내용을 분석하여 퀴즈를 만들고 있습니다..."):
             try:
-                # API Key 공백 제거
                 clean_api_key = str(api_key).strip()
                 client = OpenAI(api_key=clean_api_key)
                 
-                # 프롬프트 정의
                 system_prompt = (
                     "[역할]\n"
                     "너는 아동 및 청소년 도서 전문 교육자이자 독서 지도사야.\n"
@@ -61,13 +60,11 @@ if st.button("퀴즈 생성하기", type="primary", use_container_width=True):
                     "3. 책 내용을 모르거나 불분명할 경우 '해당 도서의 상세 정보를 찾을 수 없습니다.'라고 답변해줘."
                 )
 
-                user_input = f"책 제목: [{book_title.strip()}] 바탕으로 완독 확인 퀴즈를 만들어주세요."
-
                 response = client.chat.completions.create(
                     model="gpt-4o-mini",
                     messages=[
                         {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_input}
+                        {"role": "user", "content": f"책 제목: [{book_title.strip()}] 바탕으로 완독 확인 퀴즈를 만들어주세요."}
                     ]
                 )
                 
@@ -77,5 +74,4 @@ if st.button("퀴즈 생성하기", type="primary", use_container_width=True):
                 st.markdown(result)
                 
             except Exception as e:
-                # 에러 메시지를 문자열로 안전 변환하여 출력
                 st.error(f"오류가 발생했습니다: {str(e)}")
