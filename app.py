@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
-import sys
 import os
+import sys
 
-# 파이썬 기본 인코딩을 UTF-8로 설정
+# [인코딩 방어 코드] 시스템 출력 표준을 UTF-8로 강제 지정
 os.environ["PYTHONIOENCODING"] = "utf-8"
+if hasattr(sys, "stdout") and hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 import streamlit as st
 from openai import OpenAI
 
-# 1. 화면 모양 설정
+# 1. 화면 설정
 st.set_page_config(
     page_title="완독 확인 독서 퀴즈 생성기",
     page_icon="📚",
