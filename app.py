@@ -1,7 +1,14 @@
+# -*- coding: utf-8 -*-
+import sys
+import os
+
+# 파이썬 기본 인코딩을 UTF-8로 설정
+os.environ["PYTHONIOENCODING"] = "utf-8"
+
 import streamlit as st
 from openai import OpenAI
 
-# 1. 화면 모양을 깔끔하게 설정합니다.
+# 1. 화면 모양 설정
 st.set_page_config(
     page_title="완독 확인 독서 퀴즈 생성기",
     page_icon="📚",
@@ -9,24 +16,23 @@ st.set_page_config(
 )
 
 st.title("📚 완독 확인 독서 퀴즈 생성기")
-st.caption("책 제목만 입력하면 아이가 책을 읽었는지 확인하는 퀴즈를 자동으로 만들어줍니다.")
+st.caption("책 제목만 입력하면 아이가 책을 읽었는지 확인하는 퀴즈를 만들어줍니다.")
 
-# 2. 서버에 저장된 비밀 열쇠(API Key)를 불러옵니다.
+# 2. 비밀 열쇠(API Key) 불러오기
 api_key = st.secrets.get("OPENAI_API_KEY")
 
-# 서버에 열쇠가 없을 때만 수동 입력창을 띄웁니다.
 if not api_key:
     with st.sidebar:
-        st.warning("서버 설정에 API Key가 등록되지 않았습니다.")
+        st.warning("API Key 설정이 필요합니다.")
         api_key = st.text_input("OpenAI API Key 직접 입력", type="password")
 
-# 3. 책 제목 입력하는 창
+# 3. 책 제목 입력창
 book_title = st.text_input("책 제목을 입력하세요", placeholder="예: 호랑이를 부탁해")
 
-# 4. 버튼을 누르면 퀴즈 생성
+# 4. 퀴즈 생성 버튼
 if st.button("퀴즈 생성하기", type="primary", use_container_width=True):
     if not api_key:
-        st.error("API Key가 필요합니다. 설정법을 확인해 주세요.")
+        st.error("API Key가 필요합니다. Secrets 설정을 확인해 주세요.")
     elif not book_title.strip():
         st.warning("책 제목을 입력해 주세요.")
     else:
