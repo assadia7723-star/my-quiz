@@ -2,7 +2,7 @@
 import sys
 import os
 
-# Linux OS 환경변수를 UTF-8로 강제 지정
+# 1. 서버 입출력 스트림 강제 UTF-8 설정
 os.environ["LC_ALL"] = "C.UTF-8"
 os.environ["LANG"] = "C.UTF-8"
 os.environ["PYTHONIOENCODING"] = "utf-8"
@@ -16,17 +16,18 @@ if hasattr(sys, "stdout") and hasattr(sys.stdout, "reconfigure"):
 import streamlit as st
 from openai import OpenAI
 
-# 페이지 설정
+# 2. 페이지 설정
 st.set_page_config(
     page_title="완독 확인 독서 퀴즈 생성기",
     page_icon="📚",
     layout="centered"
 )
 
+# 3. 화면 UI
 st.title("📚 완독 확인 독서 퀴즈 생성기")
 st.caption("책 제목만 입력하면 아이가 책을 읽었는지 확인하는 퀴즈를 만들어줍니다.")
 
-# Secrets 키 불러오기
+# 4. API Key 확인
 api_key = st.secrets.get("OPENAI_API_KEY")
 
 if not api_key:
@@ -36,6 +37,7 @@ if not api_key:
 
 book_title = st.text_input("책 제목을 입력하세요", placeholder="예: 호랑이를 부탁해")
 
+# 5. 퀴즈 생성
 if st.button("퀴즈 생성하기", type="primary", use_container_width=True):
     if not api_key:
         st.error("API Key가 필요합니다. Secrets 설정을 확인해 주세요.")
@@ -44,7 +46,8 @@ if st.button("퀴즈 생성하기", type="primary", use_container_width=True):
     else:
         with st.spinner("책 내용을 분석하여 퀴즈를 만들고 있습니다..."):
             try:
-                clean_api_key = str(api_key).strip()
+                # API Key 인코딩 안전화
+                clean_api_key = str(api_key).strip().encode("ascii", "ignore").decode("ascii")
                 client = OpenAI(api_key=clean_api_key)
                 
                 system_prompt = (
@@ -60,11 +63,13 @@ if st.button("퀴즈 생성하기", type="primary", use_container_width=True):
                     "3. 책 내용을 모르거나 불분명할 경우 '해당 도서의 상세 정보를 찾을 수 없습니다.'라고 답변해줘."
                 )
 
+                user_input = f"책 제목: [{book_title.strip()}] 바탕으로 완독 확인 퀴즈를 만들어주세요."
+
                 response = client.chat.completions.create(
                     model="gpt-4o-mini",
                     messages=[
                         {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": f"책 제목: [{book_title.strip()}] 바탕으로 완독 확인 퀴즈를 만들어주세요."}
+                        {"role": "user", "content": user_input}
                     ]
                 )
                 
