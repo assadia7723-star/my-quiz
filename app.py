@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import streamlit as st
 from google import genai
 
@@ -46,7 +47,6 @@ if st.button("무료로 퀴즈 생성하기", type="primary", use_container_widt
                     f"4. 각 문제 밑에 <정답 및 완독 확인 포인트> 작성"
                 )
 
-                # 무료 티어 지원 모델 (gemini-2.5-flash 또는 gemini-2.0-flash)
                 response = client.models.generate_content(
                     model='gemini-2.5-flash',
                     contents=prompt,
